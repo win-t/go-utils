@@ -1,4 +1,4 @@
-// Package deftls
+// Package deftls.
 //
 // this package contain context some useful function for
 // configuring tls.Config

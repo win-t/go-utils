@@ -1,4 +1,4 @@
-// Package graceful
+// Package graceful.
 //
 // this package contain context that will be cancelled
 // when graceful shutdown is requested
