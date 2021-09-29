@@ -12,7 +12,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"net"
 	"time"
@@ -98,7 +97,7 @@ func UseCertSelfSigned() Option {
 			return err
 		}
 
-		subject := fmt.Sprintf("self-signed-%s", hex.EncodeToString(data[:]))
+		subject := "self-signed-" + hex.EncodeToString(data[:])
 		notBefore := time.Now()
 		notAfter := notBefore.Add(168 * time.Hour) // 1 week
 
