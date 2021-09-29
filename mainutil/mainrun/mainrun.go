@@ -11,7 +11,8 @@ import (
 	"github.com/win-t/go-utils/graceful"
 )
 
-// Run f, run graceful.Shutdown() after f, and exit with exit code 1 if f returned error.
+// Run f, run graceful.Shutdown() after f, and exit with exit code 1 if f returned error,
+// otherwise, exit with exit code 0
 //
 // this function never return.
 func Run(f func() error) {
@@ -24,4 +25,5 @@ func Run(f func() error) {
 		}))
 		os.Exit(1)
 	}
+	os.Exit(0)
 }
