@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/payfazz/go-errors/v2"
-	"github.com/win-t/go-utils/graceful/gracefulhttp"
+	"github.com/win-t/go-utils/graceful"
 	"github.com/win-t/go-utils/http/defserver"
 )
 
@@ -33,17 +33,23 @@ func RunOnUnixSocket(socket string, handler http.HandlerFunc) error {
 		return errors.Trace(err)
 	}
 
-	gracefulErr := gracefulhttp.Shutdown(s, 5*time.Second)
-	if err := s.Serve(listener); err != nil && err != http.ErrServerClosed {
-		return errors.Trace(err)
-	}
-	if err := gracefulErr(); err != nil {
-		switch {
-		case errors.Is(err, context.DeadlineExceeded):
-			return errors.New("cannot gracefuly shutdown server in 5 second")
-		default:
-			return errors.Trace(err)
+	errCh := make(chan error, 1)
+	go func() {
+		if err := s.Serve(listener); !errors.Is(err, http.ErrServerClosed) {
+			errCh <- err
 		}
+	}()
+
+	select {
+	case err := <-errCh:
+		return errors.Trace(err)
+	case <-graceful.Context().Done():
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		return errors.New("cannot gracefuly shutdown server in 5 second")
 	}
 
 	return nil
