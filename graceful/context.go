@@ -1,7 +1,7 @@
 // Package graceful.
 //
 // this package contain context that will be cancelled
-// when graceful shutdown is requested
+// when graceful shutdown is requested.
 package graceful
 
 import (
@@ -18,7 +18,7 @@ var (
 	contextOnce sync.Once
 )
 
-// Context for graceful shutdown
+// Context for graceful shutdown.
 func Context() context.Context {
 	contextOnce.Do(func() {
 		ctx, cancelFn = context.WithCancel(context.Background())
@@ -36,18 +36,18 @@ func Context() context.Context {
 	return ctx
 }
 
-// Shutdown cancel the graceful context and wait until the wait counter is zero
+// Shutdown cancel the graceful context and wait until the wait counter is zero.
 func Shutdown() {
 	cancelFn()
 	wg.Wait()
 }
 
-// WaitAdd increase the wait counter
+// WaitAdd increase the wait counter.
 func WaitAdd() {
 	wg.Add(1)
 }
 
-// WaitDone decrease the wait counter
+// WaitDone decrease the wait counter.
 func WaitDone() {
 	wg.Done()
 }

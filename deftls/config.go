@@ -1,7 +1,7 @@
 // Package deftls.
 //
 // this package contain context some useful function for
-// configuring tls.Config
+// configuring tls.Config.
 package deftls
 
 import (
@@ -18,11 +18,9 @@ import (
 	"time"
 )
 
-type Option struct {
-	apply func(*tls.Config) error
-}
+type Option func(*tls.Config) error
 
-// Config return default tls config with some options
+// Config return default tls config with some options.
 func Config(opts ...Option) (*tls.Config, error) {
 	config := &tls.Config{
 		PreferServerCipherSuites: true,
@@ -53,8 +51,8 @@ func Config(opts ...Option) (*tls.Config, error) {
 	}
 
 	for _, o := range opts {
-		if o.apply != nil {
-			if err := o.apply(config); err != nil {
+		if o != nil {
+			if err := o(config); err != nil {
 				return config, err
 			}
 		}
@@ -63,78 +61,72 @@ func Config(opts ...Option) (*tls.Config, error) {
 	return config, nil
 }
 
-// UseCertFile option
+// UseCertFile option.
 func UseCertFile(certfile, keyfile string) Option {
-	return Option{
-		func(config *tls.Config) error {
-			cert, err := tls.LoadX509KeyPair(certfile, keyfile)
-			if err != nil {
-				return err
-			}
-			config.Certificates = []tls.Certificate{cert}
-			return nil
-		},
+	return func(config *tls.Config) error {
+		cert, err := tls.LoadX509KeyPair(certfile, keyfile)
+		if err != nil {
+			return err
+		}
+		config.Certificates = []tls.Certificate{cert}
+		return nil
 	}
 }
 
-// UseCertPem option
+// UseCertPem option.
 func UseCertPem(certpem, keypem string) Option {
-	return Option{
-		func(config *tls.Config) error {
-			cert, err := tls.X509KeyPair([]byte(certpem), []byte(keypem))
-			if err != nil {
-				return err
-			}
-			config.Certificates = []tls.Certificate{cert}
-			return nil
-		},
+	return func(config *tls.Config) error {
+		cert, err := tls.X509KeyPair([]byte(certpem), []byte(keypem))
+		if err != nil {
+			return err
+		}
+		config.Certificates = []tls.Certificate{cert}
+		return nil
 	}
 }
 
-// UseCertSelfSigned option
+// UseCertSelfSigned option.
 func UseCertSelfSigned() Option {
-	return Option{
-		func(config *tls.Config) error {
-			privkey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-			if err != nil {
-				return err
-			}
+	return func(config *tls.Config) error {
+		privkey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return err
+		}
 
-			var data [16]byte
-			if _, err := rand.Read(data[:]); err != nil {
-				return err
-			}
+		var data [16]byte
+		if _, err := rand.Read(data[:]); err != nil {
+			return err
+		}
 
-			subject := fmt.Sprintf("self-signed-%s", hex.EncodeToString(data[:]))
-			notBefore := time.Now()
-			notAfter := notBefore.Add(168 * time.Hour) // 1 week
+		subject := fmt.Sprintf("self-signed-%s", hex.EncodeToString(data[:]))
+		notBefore := time.Now()
+		notAfter := notBefore.Add(168 * time.Hour) // 1 week
 
-			template := &x509.Certificate{
-				SerialNumber: big.NewInt(1),
-				Subject:      pkix.Name{CommonName: subject},
-				NotBefore:    notBefore,
-				NotAfter:     notAfter,
-				KeyUsage:     x509.KeyUsageDigitalSignature,
-				ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-				DNSNames:     []string{"localhost"},
-				IPAddresses: []net.IP{
-					net.IPv6loopback,
-					net.IPv4(127, 0, 0, 1),
-				},
-			}
+		template := &x509.Certificate{
+			SerialNumber: big.NewInt(1),
+			Subject:      pkix.Name{CommonName: subject},
+			NotBefore:    notBefore,
+			NotAfter:     notAfter,
+			KeyUsage:     x509.KeyUsageDigitalSignature,
+			ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+			DNSNames:     []string{"localhost"},
+			IPAddresses: []net.IP{
+				net.IPv6loopback,
+				net.IPv4(127, 0, 0, 1),
+			},
+		}
 
-			derCert, err := x509.CreateCertificate(rand.Reader, template, template, privkey.Public(), privkey)
-			if err != nil {
-				return err
-			}
+		derCert, err := x509.CreateCertificate(rand.Reader, template, template, privkey.Public(), privkey)
+		if err != nil {
+			return err
+		}
 
-			cert := tls.Certificate{
-				Certificate: [][]byte{derCert},
-				PrivateKey:  privkey,
-			}
+		cert := tls.Certificate{
+			Certificate: [][]byte{derCert},
+			PrivateKey:  privkey,
+		}
 
-			config.Certificates = []tls.Certificate{cert}
-			return nil
-		},
+		config.Certificates = []tls.Certificate{cert}
+		return nil
 	}
 }
