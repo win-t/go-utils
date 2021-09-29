@@ -4,15 +4,12 @@
 package httprun
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/payfazz/go-errors/v2"
-	"github.com/win-t/go-utils/graceful"
 	"github.com/win-t/go-utils/http/defserver"
 )
 
@@ -40,17 +37,5 @@ func RunOnUnixSocket(socket string, handler http.HandlerFunc) error {
 		}
 	}()
 
-	select {
-	case err := <-errCh:
-		return errors.Trace(err)
-	case <-graceful.Context().Done():
-	}
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := s.Shutdown(shutdownCtx); err != nil {
-		return errors.New("cannot gracefuly shutdown server in 5 second")
-	}
-
-	return nil
+	return wait(errCh, s)
 }

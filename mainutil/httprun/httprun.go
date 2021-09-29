@@ -24,6 +24,10 @@ func Run(addr string, handler http.HandlerFunc) error {
 		}
 	}()
 
+	return wait(errCh, s)
+}
+
+func wait(errCh chan error, s *http.Server) error {
 	select {
 	case err := <-errCh:
 		return errors.Trace(err)
