@@ -11,19 +11,37 @@ import (
 	"github.com/win-t/go-utils/graceful"
 )
 
-// Run f, run graceful.Shutdown() after f, and exit with exit code 1 if f returned error,
-// otherwise, exit with exit code 0
+// Run f
+//
+// after f is completed, run graceful.ShutdownAndWait
+// if f returned error, then run os.Exit(1),
+// otherwise run os.Exit(0),
 //
 // this function never return.
 func Run(f func() error) {
-	if err := errors.Catch(func() error {
-		defer graceful.Shutdown()
+	exitCode := 1
+	defer func() { os.Exit(exitCode) }()
+
+	err := errors.Catch(func() error {
+		defer graceful.ShutdownAndWait()
 		return f()
-	}); err != nil {
-		fmt.Fprintln(os.Stderr, errors.FormatWithFilter(err, func(l trace.Location) bool {
-			return !l.InPkg("github.com/win-t/go-utils")
-		}))
-		os.Exit(1)
+	})
+
+	if err == nil {
+		exitCode = 0
+		return
 	}
-	os.Exit(0)
+
+	reporter.Lock()
+	defer reporter.Unlock()
+
+	if reporter.fn != nil {
+		exitCode = reporter.fn(err)
+	} else {
+		fmt.Fprintln(os.Stderr, errors.FormatWithFilter(err, filterTrace))
+	}
+}
+
+func filterTrace(l trace.Location) bool {
+	return !l.InPkg("github.com/win-t/go-utils")
 }
