@@ -60,3 +60,12 @@ func WithTLS(opts ...deftls.Option) Option {
 		return nil
 	}
 }
+
+func WithNoTimeout() Option {
+	return func(s *http.Server) error {
+		s.ReadTimeout = 0
+		s.WriteTimeout = 0
+		s.IdleTimeout = 0
+		return nil
+	}
+}
