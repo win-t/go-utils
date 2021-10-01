@@ -13,15 +13,18 @@ import (
 	"github.com/win-t/go-utils/mainutil/mainrun"
 )
 
-// Run http server from handler returned by getHandler
-func Run(addr string, getHandler func() (http.HandlerFunc, error), opts ...defserver.Option) {
+// Run http server.
+func Run(setupFn func(*RunOption) error) {
 	mainrun.Run(func() error {
-		handler, err := handlerOf(getHandler)
-		if err != nil {
-			return errors.Trace(err)
+		opt := RunOption{addr: ":8080"}
+
+		if setupFn != nil {
+			if err := setupFn(&opt); err != nil {
+				return errors.Trace(err)
+			}
 		}
 
-		s, err := defserver.New(addr, handler, opts...)
+		s, err := defserver.New(opt.addr, opt.handler, opt.opts...)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -41,15 +44,6 @@ func Run(addr string, getHandler func() (http.HandlerFunc, error), opts ...defse
 
 		return wait(errCh, s)
 	})
-}
-
-func handlerOf(getHandler func() (http.HandlerFunc, error)) (http.HandlerFunc, error) {
-	if getHandler == nil {
-		return nil, nil
-	}
-
-	handler, err := getHandler()
-	return handler, errors.Trace(err)
 }
 
 func wait(errCh chan error, s *http.Server) error {

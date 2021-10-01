@@ -15,26 +15,30 @@ import (
 	"github.com/win-t/go-utils/mainutil/mainrun"
 )
 
-// Run http server on unix socket from handler returned by getHandler
-func RunUnixSocket(socket string, getHandler func() (http.HandlerFunc, error)) {
+// Run http server on unix socket.
+func RunUnixSocket(setupFn func(*RunOption) error) {
 	mainrun.Run(func() error {
-		handler, err := handlerOf(getHandler)
+		opt := RunOption{addr: "./http.sock"}
+
+		if setupFn != nil {
+			if err := setupFn(&opt); err != nil {
+				return errors.Trace(err)
+			}
+		}
+
+		var err error
+		opt.addr, err = filepath.Abs(opt.addr)
 		if err != nil {
 			return errors.Trace(err)
 		}
 
-		socket, err := filepath.Abs(socket)
+		listener, err := net.Listen("unix", opt.addr)
 		if err != nil {
 			return errors.Trace(err)
 		}
+		defer os.RemoveAll(opt.addr)
 
-		listener, err := net.Listen("unix", socket)
-		if err != nil {
-			return errors.Trace(err)
-		}
-		defer os.RemoveAll(socket)
-
-		s, err := defserver.New("", handler)
+		s, err := defserver.New("", opt.handler, opt.opts...)
 		if err != nil {
 			return errors.Trace(err)
 		}
