@@ -1,45 +1,50 @@
 package graceful
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 var shutdown struct {
 	sync.Mutex
-	fn []func()
+	sync.WaitGroup
 }
 
-// Shutdown cancel the graceful context and
-// wait until all registered function to completed.
-func Shutdown() {
+// ShutdownAndWait cancel the graceful context and
+// wait until all registered WaitOnShutdown ctx to completed.
+func ShutdownAndWait() {
 	shutdown.Lock()
 	defer shutdown.Unlock()
 
 	Context() // make sure graceful context is initialized
 	graceful.cancel()
+	<-graceful.Done()
 
-	var wg sync.WaitGroup
-	for _, fn := range shutdown.fn {
-		fn := fn
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fn()
-		}()
-	}
-	wg.Wait()
-
-	shutdown.fn = nil
+	shutdown.Wait()
 }
 
-// Register function f to be called when Shutdown is called,
-// if graceful context is already done then f is called immediately.
-func RegisterOnShutdown(f func()) {
+// Register ctx to be waited on shutdown
+func WaitOnShutdown(ctx context.Context) {
 	shutdown.Lock()
 	defer shutdown.Unlock()
 
+	Context() // make sure graceful context is initialized
+
 	select {
 	case <-graceful.Done():
-		go f()
+		return
 	default:
-		shutdown.fn = append(shutdown.fn, f)
 	}
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
+	}
+
+	shutdown.Add(1)
+	go func() {
+		defer shutdown.Done()
+		<-ctx.Done()
+	}()
 }

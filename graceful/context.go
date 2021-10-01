@@ -17,21 +17,18 @@ import (
 var graceful struct {
 	context.Context
 	cancel context.CancelFunc
-	once   sync.Once
+	setup  sync.Once
 }
 
 // Context for graceful shutdown.
 func Context() context.Context {
-	graceful.once.Do(func() {
+	graceful.setup.Do(func() {
 		graceful.Context, graceful.cancel = context.WithCancel(context.Background())
 		go func() {
 			defer graceful.cancel()
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, getInterruptSigs()...)
-			select {
-			case <-c:
-			case <-graceful.Done():
-			}
+			<-c
 			signal.Stop(c)
 		}()
 	})
