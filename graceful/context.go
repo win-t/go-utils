@@ -20,6 +20,9 @@ var graceful struct {
 	setup  sync.Once
 }
 
+// make sure graceful context is initialized
+func init() { Context() }
+
 // Context for graceful shutdown.
 func Context() context.Context {
 	graceful.setup.Do(func() {

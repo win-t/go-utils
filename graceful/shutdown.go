@@ -16,7 +16,6 @@ func ShutdownAndWait() {
 	shutdown.Lock()
 	defer shutdown.Unlock()
 
-	Context() // make sure graceful context is initialized
 	graceful.cancel()
 	<-graceful.Done()
 
@@ -27,8 +26,6 @@ func ShutdownAndWait() {
 func WaitOnShutdown(ctx context.Context) {
 	shutdown.Lock()
 	defer shutdown.Unlock()
-
-	Context() // make sure graceful context is initialized
 
 	select {
 	case <-graceful.Done():
