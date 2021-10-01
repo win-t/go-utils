@@ -3,6 +3,7 @@ package mainhttp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -33,8 +34,10 @@ func Run(setupFn func(*RunOption) error) {
 		go func() {
 			var err error
 			if s.TLSConfig == nil {
+				fmt.Printf("Running http on port %s\n", s.Addr)
 				err = s.ListenAndServe()
 			} else {
+				fmt.Printf("Running https on port %s\n", s.Addr)
 				err = s.ListenAndServeTLS("", "")
 			}
 			if !errors.Is(err, http.ErrServerClosed) {
@@ -63,16 +66,15 @@ func wait(errCh chan error, s *http.Server) error {
 	if s.WriteTimeout > timeout {
 		timeout = s.WriteTimeout
 	}
-	timeout += 1 * time.Second
+	timeout += 500 * time.Millisecond
+	timeoutStr := timeout.Truncate(time.Second).String()
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	fmt.Printf("Graceful shutdown http server, waiting in %s\n", timeoutStr)
 	if err := s.Shutdown(ctx); err != nil {
-		return errors.Errorf(
-			"cannot gracefuly shutdown server in %s",
-			timeout.Truncate(time.Second).String(),
-		)
+		return errors.Errorf("cannot gracefuly shutdown server in %s\n", timeoutStr)
 	}
 
 	return nil

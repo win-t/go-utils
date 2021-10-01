@@ -4,6 +4,7 @@
 package mainhttp
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -45,6 +46,7 @@ func RunUnixSocket(setupFn func(*RunOption) error) {
 
 		errCh := make(chan error, 1)
 		go func() {
+			fmt.Printf("Running http on unix socket %s\n", opt.addr)
 			if err := s.Serve(listener); !errors.Is(err, http.ErrServerClosed) {
 				errCh <- err
 			}
