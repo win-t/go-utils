@@ -16,7 +16,6 @@ import (
 //
 // if f returned error, then run os.Exit(1),
 // otherwise run os.Exit(0),
-//
 // this function never return.
 func Run(f func(context.Context) error) {
 	exitCode := 1
