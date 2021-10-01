@@ -2,6 +2,7 @@
 package mainrun
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -13,20 +14,15 @@ import (
 
 // Run f
 //
-// after f is completed, run graceful.ShutdownAndWait
 // if f returned error, then run os.Exit(1),
 // otherwise run os.Exit(0),
 //
 // this function never return.
-func Run(f func() error) {
+func Run(f func(context.Context) error) {
 	exitCode := 1
 	defer func() { os.Exit(exitCode) }()
 
-	err := errors.Catch(func() error {
-		defer graceful.ShutdownAndWait()
-		return f()
-	})
-
+	err := errors.Catch(func() error { return f(graceful.Context()) })
 	if err == nil {
 		exitCode = 0
 		return
