@@ -34,9 +34,10 @@ func wait(errCh chan error, s *http.Server) error {
 	case <-graceful.Context().Done():
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := s.Shutdown(shutdownCtx); err != nil {
+
+	if err := s.Shutdown(ctx); err != nil {
 		return errors.New("cannot gracefuly shutdown server in 5 second")
 	}
 
