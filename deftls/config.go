@@ -15,6 +15,8 @@ import (
 	"math/big"
 	"net"
 	"time"
+
+	"github.com/payfazz/go-errors/v2"
 )
 
 type Option func(*tls.Config) error
@@ -52,7 +54,7 @@ func Config(opts ...Option) (*tls.Config, error) {
 	for _, o := range opts {
 		if o != nil {
 			if err := o(config); err != nil {
-				return config, err
+				return config, errors.Trace(err)
 			}
 		}
 	}
@@ -65,7 +67,7 @@ func UseCertFile(certfile, keyfile string) Option {
 	return func(config *tls.Config) error {
 		cert, err := tls.LoadX509KeyPair(certfile, keyfile)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 		config.Certificates = []tls.Certificate{cert}
 		return nil
@@ -77,7 +79,7 @@ func UseCertPem(certpem, keypem string) Option {
 	return func(config *tls.Config) error {
 		cert, err := tls.X509KeyPair([]byte(certpem), []byte(keypem))
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 		config.Certificates = []tls.Certificate{cert}
 		return nil
@@ -89,12 +91,12 @@ func UseCertSelfSigned() Option {
 	return func(config *tls.Config) error {
 		privkey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 
 		var data [16]byte
 		if _, err := rand.Read(data[:]); err != nil {
-			return err
+			return errors.Trace(err)
 		}
 
 		subject := "self-signed-" + hex.EncodeToString(data[:])
@@ -117,7 +119,7 @@ func UseCertSelfSigned() Option {
 
 		derCert, err := x509.CreateCertificate(rand.Reader, template, template, privkey.Public(), privkey)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 
 		cert := tls.Certificate{
