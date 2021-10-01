@@ -11,15 +11,21 @@ import (
 	"github.com/win-t/go-utils/http/defserver"
 )
 
-func Run(addr string, handler http.HandlerFunc) error {
-	s, err := defserver.New(addr, handler)
+func Run(addr string, handler http.HandlerFunc, opts ...defserver.Option) error {
+	s, err := defserver.New(addr, handler, opts...)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	errCh := make(chan error, 1)
 	go func() {
-		if err := s.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		var err error
+		if s.TLSConfig == nil {
+			err = s.ListenAndServe()
+		} else {
+			err = s.ListenAndServeTLS("", "")
+		}
+		if !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err
 		}
 	}()
