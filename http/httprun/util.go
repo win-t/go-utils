@@ -3,7 +3,6 @@ package httprun
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/payfazz/go-errors/v2"
 )
@@ -22,14 +21,8 @@ func wait(ctx context.Context, errCh chan error, s *http.Server) error {
 	case <-ctx.Done():
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.Shutdown(ctx); err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			err = errors.Errorf("http shutdown timeout: %w", err)
-		}
-		return err
+	if err := s.Shutdown(context.Background()); err != nil {
+		return errors.Trace(err)
 	}
 
 	return nil
