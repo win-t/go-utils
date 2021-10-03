@@ -7,7 +7,6 @@ import (
 
 	"github.com/payfazz/go-errors/v2"
 
-	"github.com/win-t/go-utils/deftls"
 	"github.com/win-t/go-utils/http/defserver"
 )
 
@@ -24,28 +23,10 @@ func Run(ctx context.Context, s *http.Server) error {
 	return wait(ctx, errCh, s)
 }
 
-func ListenAndServe(ctx context.Context, addr string, handler http.HandlerFunc) error {
-	s, err := defserver.New(addr, handler)
+func ListenAndServe(ctx context.Context, addr string, handler http.HandlerFunc, opts ...defserver.Option) error {
+	s, err := defserver.New(addr, handler, opts...)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	return Run(ctx, s)
-}
-
-func ListenAndServeTLS(ctx context.Context, addr, certFile, keyFile string, handler http.HandlerFunc) error {
-	tlsOpt := deftls.UseCertSelfSigned()
-	if certFile != "" || keyFile != "" {
-		tlsOpt = deftls.UseCertFile(certFile, keyFile)
-	}
-
-	s, err := defserver.New(
-		addr,
-		handler,
-		defserver.WithTLS(tlsOpt),
-	)
-	if err != nil {
-		return errors.Trace(err)
-	}
-
 	return Run(ctx, s)
 }

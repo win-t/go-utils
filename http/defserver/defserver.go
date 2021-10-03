@@ -41,6 +41,10 @@ func New(addr string, handler http.HandlerFunc, opts ...Option) (*http.Server, e
 		}
 	}
 
+	if _, ok := server.Handler.(noDefaultMiddleware); ok {
+		server.Handler = handler
+	}
+
 	return server, nil
 }
 
@@ -66,6 +70,17 @@ func WithNoTimeout() Option {
 		s.ReadTimeout = 0
 		s.WriteTimeout = 0
 		s.IdleTimeout = 0
+		return nil
+	}
+}
+
+type noDefaultMiddleware struct{}
+
+func (noDefaultMiddleware) ServeHTTP(http.ResponseWriter, *http.Request) {}
+
+func WithNoDefaultMiddleware() Option {
+	return func(s *http.Server) error {
+		s.Handler = noDefaultMiddleware{}
 		return nil
 	}
 }
