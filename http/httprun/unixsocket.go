@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 
 	"github.com/payfazz/go-errors/v2"
+
+	"github.com/win-t/go-utils/http/defserver"
 )
 
 func RunUnixSocket(ctx context.Context, s *http.Server) error {
@@ -30,4 +32,12 @@ func RunUnixSocket(ctx context.Context, s *http.Server) error {
 	go func() { errCh <- ignoreErrServerClosed(s.Serve(listener)) }()
 
 	return wait(ctx, errCh, s)
+}
+
+func ListenAndServeUnixSocket(ctx context.Context, addr string, handler http.HandlerFunc, opts ...defserver.Option) error {
+	s, err := defserver.New(addr, handler, opts...)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return RunUnixSocket(ctx, s)
 }
