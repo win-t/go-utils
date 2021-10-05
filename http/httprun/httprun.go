@@ -23,7 +23,7 @@ func Run(ctx context.Context, s *http.Server) error {
 	return wait(ctx, errCh, s)
 }
 
-func ListenAndServe(ctx context.Context, addr string, handler http.HandlerFunc, opts ...defserver.Option) error {
+func ListenAndServe(ctx context.Context, addr string, handler http.Handler, opts ...defserver.Option) error {
 	s, err := defserver.New(addr, handler, opts...)
 	if err != nil {
 		return errors.Trace(err)

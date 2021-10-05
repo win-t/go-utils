@@ -34,7 +34,7 @@ func RunUnixSocket(ctx context.Context, s *http.Server) error {
 	return wait(ctx, errCh, s)
 }
 
-func ListenAndServeUnixSocket(ctx context.Context, addr string, handler http.HandlerFunc, opts ...defserver.Option) error {
+func ListenAndServeUnixSocket(ctx context.Context, addr string, handler http.Handler, opts ...defserver.Option) error {
 	s, err := defserver.New(addr, handler, opts...)
 	if err != nil {
 		return errors.Trace(err)
