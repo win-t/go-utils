@@ -1,7 +1,6 @@
 // Package deftls.
 //
-// This package contain some useful function for
-// configuring tls.Config.
+// This package provides some useful function for configuring tls.
 package deftls
 
 import (
@@ -21,7 +20,7 @@ import (
 
 type Option func(*tls.Config) error
 
-// Config return default tls config with some options.
+// Config return default tls config with default options.
 func Config(opts ...Option) (*tls.Config, error) {
 	config := &tls.Config{
 		PreferServerCipherSuites: true,
@@ -62,10 +61,10 @@ func Config(opts ...Option) (*tls.Config, error) {
 	return config, nil
 }
 
-// UseCertFile option.
-func UseCertFile(certfile, keyfile string) Option {
+// UseCertFile option, use certfilePath and keyfilePath as certificate.
+func UseCertFile(certfilePath, keyfilePath string) Option {
 	return func(config *tls.Config) error {
-		cert, err := tls.LoadX509KeyPair(certfile, keyfile)
+		cert, err := tls.LoadX509KeyPair(certfilePath, keyfilePath)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -74,7 +73,7 @@ func UseCertFile(certfile, keyfile string) Option {
 	}
 }
 
-// UseCertPem option.
+// UseCertPem option, use certpem and keypem as certificate.
 func UseCertPem(certpem, keypem string) Option {
 	return func(config *tls.Config) error {
 		cert, err := tls.X509KeyPair([]byte(certpem), []byte(keypem))
@@ -86,7 +85,7 @@ func UseCertPem(certpem, keypem string) Option {
 	}
 }
 
-// UseCertSelfSigned option.
+// UseCertSelfSigned option, use auto-generated self-signed certificate.
 func UseCertSelfSigned() Option {
 	return func(config *tls.Config) error {
 		privkey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

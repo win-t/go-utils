@@ -14,12 +14,9 @@ import (
 type Option func(*http.Server) error
 
 // New return http.Server that commonly used.
-func New(addr string, handler http.HandlerFunc, opts ...Option) (*http.Server, error) {
+func New(addr string, handler http.Handler, opts ...Option) (*http.Server, error) {
 	if handler == nil {
-		handler = func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(501)
-			w.Write([]byte("501 Not Implemented"))
-		}
+		handler = http.DefaultServeMux
 	}
 
 	server := &http.Server{
